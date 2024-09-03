@@ -77,6 +77,20 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+        select {
+            width: 100%;
+            padding: 10px;
+            margin-top: 20px;
+            border: 2px solid #bdc3c7;
+            border-radius: 8px;
+            font-size: 1rem;
+            color: #333;
+            transition: border-color 0.3s ease;
+        }
+        select:focus {
+            border-color: #3498db;
+            outline: none;
+        }
     </style>
 </head>
 <body>
@@ -86,6 +100,11 @@
         <div id="cardReader">Waiting for card scan...</div>
         <div id="loadingSpinner"></div>
         <div id="result"></div>
+
+        <label for="printerDropdown" style="margin-top: 20px; display: block;">Select Preferred Printer:</label>
+        <select id="printerDropdown">
+            <option value="">-- Select Printer --</option>
+        </select>
     </div>
 
     <script>
@@ -93,6 +112,7 @@
         let resultElement = document.getElementById('result');
         let cardReaderElement = document.getElementById('cardReader');
         let loadingSpinner = document.getElementById('loadingSpinner');
+        let printerDropdown = document.getElementById('printerDropdown');
 
         document.addEventListener('keydown', function(e) {
             switch(e.key) {
@@ -121,42 +141,74 @@
             }
         }
 
-function fulfillBooking(userId) {
-    loadingSpinner.style.display = 'block';
-    resultElement.textContent = '';
-
-    const url = 'https://script.google.com/macros/s/AKfycby4VUdxNUY3cMJB9bqaazZkQtnhuq-ejWMau4mvAHAorbp2bmXj7zbdbaKXg6rVtunN/exec' +
-                '?action=fulfillBooking' + 
-                '&userId=' + encodeURIComponent(userId);
-
-    fetch(url)
-    .then(response => {
-        loadingSpinner.style.display = 'none';
-        if (!response.ok) {
-            throw new Error('Network response was not ok');
-        }
-        return response.json();
-    })
-    .then(response => {
-        if (response.status === 200) {
-            resultElement.innerHTML = `<span class="success">Printer Assigned Successfully!</span><br>Printer ID: ${response.id}`;
-        } else {
-            resultElement.innerHTML = `<span class="error">${response.message}</span>`;
-        }
-    })
-    .catch(error => {
-        loadingSpinner.style.display = 'none';
-        console.error('Error:', error);
-        resultElement.innerHTML = '<span class="error">An error occurred. Please try again.</span>';
-    })
-    .finally(() => {
-        setTimeout(() => {
-            cardReaderElement.classList.remove('active');
-            cardReaderElement.textContent = 'Waiting for card scan...';
+        function fulfillBooking(userId) {
+            loadingSpinner.style.display = 'block';
             resultElement.textContent = '';
-        }, 5000);
-    });
-}
+
+            const printerId = printerDropdown.value; // Get the selected printer ID
+
+            const url = 'https://script.google.com/macros/s/AKfycbwxdYZ4HSgHrk0L2oQERiennMShLxVY4dGHK9J5D1oPwv49bcZyoVo8x7jdrVeyMwVn/exec' +
+                        '?action=fulfillBooking' + 
+                        '&userId=' + encodeURIComponent(userId) +
+                        '&printerId=' + encodeURIComponent(printerId); // Add printerId to the request
+
+            fetch(url)
+            .then(response => {
+                loadingSpinner.style.display = 'none';
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(response => {
+                if (response.status === 200) {
+                    resultElement.innerHTML = `<span class="success">Printer Assigned Successfully!</span><br>Printer ID: ${response.id}`;
+                } else {
+                    resultElement.innerHTML = `<span class="error">${response.message}</span>`;
+                }
+            })
+            .catch(error => {
+                loadingSpinner.style.display = 'none';
+                console.error('Error:', error);
+                resultElement.innerHTML = '<span class="error">An error occurred. Please try again.</span>';
+            })
+            .finally(() => {
+                setTimeout(() => {
+                    cardReaderElement.classList.remove('active');
+                    cardReaderElement.textContent = 'Waiting for card scan...';
+                    resultElement.textContent = '';
+                }, 5000);
+            });
+        }
+
+        function fetchMachines() {
+            const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwxdYZ4HSgHrk0L2oQERiennMShLxVY4dGHK9J5D1oPwv49bcZyoVo8x7jdrVeyMwVn/exec';
+            fetch(`${SCRIPT_URL}?action=listMachines`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 200) {
+                        const offlineMachines = data.machines.filter(machine => !machine.powerStatus);
+                        updateDropdown(offlineMachines);
+                    } else {
+                        console.error('Error fetching machines:', data.message);
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+        }
+
+        function updateDropdown(machines) {
+            printerDropdown.innerHTML = '<option value="">-- Select Printer --</option>'; // Reset dropdown
+
+            machines.forEach(machine => {
+                const option = document.createElement('option');
+                option.value = machine.id; // Set the value to the printer's ID
+                option.textContent = `${machine.machineType} (ID: ${machine.id})`; // Display machine type and ID
+                printerDropdown.appendChild(option);
+            });
+        }
+
+        // Fetch offline machines initially
+        fetchMachines();
     </script>
 </body>
 </html>
