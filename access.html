@@ -147,7 +147,7 @@
 
             const printerId = printerDropdown.value; // Get the selected printer ID
 
-            const url = 'https://script.google.com/macros/s/AKfycbwxdYZ4HSgHrk0L2oQERiennMShLxVY4dGHK9J5D1oPwv49bcZyoVo8x7jdrVeyMwVn/exec' +
+            const url = 'https://script.google.com/macros/s/AKfycbw7fsoJ4Gg0eUckGBoLBJ2kxNGR78i6Vadu5OzW2Cj6h-X6noF0RkbatUNxO3pAMkal/exec' +
                         '?action=fulfillBooking' + 
                         '&userId=' + encodeURIComponent(userId) +
                         '&printerId=' + encodeURIComponent(printerId); // Add printerId to the request
@@ -182,7 +182,7 @@
         }
 
         function fetchMachines() {
-            const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwxdYZ4HSgHrk0L2oQERiennMShLxVY4dGHK9J5D1oPwv49bcZyoVo8x7jdrVeyMwVn/exec';
+            const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw7fsoJ4Gg0eUckGBoLBJ2kxNGR78i6Vadu5OzW2Cj6h-X6noF0RkbatUNxO3pAMkal/exec';
             fetch(`${SCRIPT_URL}?action=listMachines`)
                 .then(response => response.json())
                 .then(data => {
