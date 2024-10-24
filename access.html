@@ -91,6 +91,59 @@
             border-color: #3498db;
             outline: none;
         }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+        }
+        .modal-content {
+            background-color: #fff;
+            margin: 15% auto;
+            padding: 2rem;
+            border-radius: 8px;
+            width: 80%;
+            max-width: 500px;
+            position: relative;
+        }
+        .close {
+            position: absolute;
+            right: 1rem;
+            top: 0.5rem;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+        .button-group {
+            margin-top: 2rem;
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+        }
+        .btn {
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background-color 0.3s ease;
+        }
+        .btn-primary {
+            background-color: #3498db;
+            color: white;
+        }
+        .btn-secondary {
+            background-color: #95a5a6;
+            color: white;
+        }
+        .btn:hover {
+            opacity: 0.9;
+        }
     </style>
 </head>
 <body>
@@ -100,19 +153,32 @@
         <div id="cardReader">Waiting for card scan...</div>
         <div id="loadingSpinner"></div>
         <div id="result"></div>
+    </div>
 
-        <label for="printerDropdown" style="margin-top: 20px; display: block;">Select Preferred Printer:</label>
-        <select id="printerDropdown">
-            <option value="">-- Select Printer --</option>
-        </select>
+    <!-- Modal -->
+    <div id="printerModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Select Printer</h2>
+            <p>Please select your preferred printer:</p>
+            <select id="printerDropdown">
+                <option value="">-- Select Printer --</option>
+            </select>
+            <div class="button-group">
+                <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="confirmPrinter()">Confirm</button>
+            </div>
+        </div>
     </div>
 
     <script>
         let cardInput = '';
+        let currentUserId = '';
         let resultElement = document.getElementById('result');
         let cardReaderElement = document.getElementById('cardReader');
         let loadingSpinner = document.getElementById('loadingSpinner');
         let printerDropdown = document.getElementById('printerDropdown');
+        let modal = document.getElementById('printerModal');
 
         document.addEventListener('keydown', function(e) {
             switch(e.key) {
@@ -131,26 +197,51 @@
             e.preventDefault();
         });
 
+        // Close modal when clicking the X or outside the modal
+        document.querySelector('.close').onclick = closeModal;
+        window.onclick = function(event) {
+            if (event.target == modal) {
+                closeModal();
+            }
+        }
+
         function processCardData(data) {
             if (data.length > 0) {
                 console.log('Processing card data:', data);
                 cardReaderElement.textContent = 'Card scanned successfully!';
-                fulfillBooking(data);
+                currentUserId = data;
+                fetchMachines();
+                modal.style.display = 'block';
             } else {
                 console.log('No card data to process');
             }
         }
 
-        function fulfillBooking(userId) {
+        function closeModal() {
+            modal.style.display = 'none';
+            cardReaderElement.classList.remove('active');
+            cardReaderElement.textContent = 'Waiting for card scan...';
+            currentUserId = '';
+        }
+
+        function confirmPrinter() {
+            const selectedPrinter = printerDropdown.value;
+            if (!selectedPrinter) {
+                alert('Please select a printer');
+                return;
+            }
+            fulfillBooking(currentUserId, selectedPrinter);
+            modal.style.display = 'none';
+        }
+
+        function fulfillBooking(userId, printerId) {
             loadingSpinner.style.display = 'block';
             resultElement.textContent = '';
-
-            const printerId = printerDropdown.value; // Get the selected printer ID
 
             const url = 'https://script.google.com/macros/s/AKfycbw7fsoJ4Gg0eUckGBoLBJ2kxNGR78i6Vadu5OzW2Cj6h-X6noF0RkbatUNxO3pAMkal/exec' +
                         '?action=fulfillBooking' + 
                         '&userId=' + encodeURIComponent(userId) +
-                        '&printerId=' + encodeURIComponent(printerId); // Add printerId to the request
+                        '&printerId=' + encodeURIComponent(printerId);
 
             fetch(url)
             .then(response => {
@@ -197,18 +288,15 @@
         }
 
         function updateDropdown(machines) {
-            printerDropdown.innerHTML = '<option value="">-- Select Printer --</option>'; // Reset dropdown
+            printerDropdown.innerHTML = '<option value="">-- Select Printer --</option>';
 
             machines.forEach(machine => {
                 const option = document.createElement('option');
-                option.value = machine.id; // Set the value to the printer's ID
-                option.textContent = `${machine.machineType} (ID: ${machine.id})`; // Display machine type and ID
+                option.value = machine.id;
+                option.textContent = `${machine.machineType} (ID: ${machine.id})`;
                 printerDropdown.appendChild(option);
             });
         }
-
-        // Fetch offline machines initially
-        fetchMachines();
     </script>
 </body>
 </html>
