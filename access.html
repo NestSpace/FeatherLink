@@ -179,7 +179,8 @@
         let loadingSpinner = document.getElementById('loadingSpinner');
         let printerDropdown = document.getElementById('printerDropdown');
         let modal = document.getElementById('printerModal');
-
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxxXHHsoWmvPijGyNpR6HICo6kQmFxDJRN2yx5ttPzFnM_PQTcbIjjdid-s70jTgZQc/exec';
+        
         document.addEventListener('keydown', function(e) {
             switch(e.key) {
                 case 'Enter':
@@ -238,8 +239,7 @@
             loadingSpinner.style.display = 'block';
             resultElement.textContent = '';
 
-            const url = 'https://script.google.com/macros/s/AKfycbw7fsoJ4Gg0eUckGBoLBJ2kxNGR78i6Vadu5OzW2Cj6h-X6noF0RkbatUNxO3pAMkal/exec' +
-                        '?action=fulfillBooking' + 
+            const url = SCRIPT_URL + 
                         '&userId=' + encodeURIComponent(userId) +
                         '&printerId=' + encodeURIComponent(printerId);
 
@@ -273,7 +273,6 @@
         }
 
         function fetchMachines() {
-            const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw7fsoJ4Gg0eUckGBoLBJ2kxNGR78i6Vadu5OzW2Cj6h-X6noF0RkbatUNxO3pAMkal/exec';
             fetch(`${SCRIPT_URL}?action=listMachines`)
                 .then(response => response.json())
                 .then(data => {
